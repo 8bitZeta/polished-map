@@ -135,7 +135,7 @@ void Tileset_Window::initialize() {
 	_tile_group->end();
 	// Initialize window
 	_window->box(OS_BG_BOX);
-	_window->callback((Fl_Callback *)close_cb, this);
+	_window->callback((Fl_Callback *)cancel_cb, this);
 	_window->set_modal();
 	// Initialize window's children
 	_tileset_group->box(OS_SPACER_THIN_DOWN_FRAME);
@@ -237,6 +237,8 @@ void Tileset_Window::tileset(Tileset *t) {
 void Tileset_Window::show(const Fl_Widget *p, bool show_priority) {
 	initialize();
 	refresh();
+	Fl_Window *prev_grab = Fl::grab();
+	Fl::grab(NULL);
 	_show_priority = show_priority;
 	int x = p->x() + (p->w() - _window->w()) / 2;
 	int y = p->y() + (p->h() - _window->h()) / 2;
@@ -244,6 +246,7 @@ void Tileset_Window::show(const Fl_Widget *p, bool show_priority) {
 	_ok_button->take_focus();
 	_window->show();
 	while (_window->shown()) { Fl::wait(); }
+	Fl::grab(prev_grab);
 }
 
 void Tileset_Window::draw_tile(int x, int y, uint8_t id) const {
@@ -476,11 +479,13 @@ void Tileset_Window::delete_tile_cb(Fl_Widget *, Tileset_Window *tw) {
 
 void Tileset_Window::copy_tile_graphics_cb(Toolbar_Button *, Tileset_Window *tw) {
 	tw->_selected->for_clipboard(true);
+	float scale = fl_override_scale();
 	Fl_Copy_Surface *surface = new Fl_Copy_Surface(TILE_SIZE, TILE_SIZE);
 	surface->set_current();
 	surface->draw(tw->_selected);
 	delete surface;
 	Fl_Display_Device::display_device()->set_current();
+	fl_restore_scale(scale);
 	tw->_selected->for_clipboard(false);
 }
 
